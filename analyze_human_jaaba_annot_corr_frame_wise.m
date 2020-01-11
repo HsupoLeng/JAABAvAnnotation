@@ -1,8 +1,11 @@
-function analyze_human_jaaba_annot_corr_frame_wise(bout_match_sel_str, behav_sel, override_jab_list, is_noRel, frame_matches_mat, plot_bar, plot_violin, img_format)
+function analyze_human_jaaba_annot_corr_frame_wise(bout_match_sel_str, behav_sel, override_jab_list, is_noRel, frame_matches_mat, plot_bar, plot_violin, img_formats)
     load('common-params-annot-analysis.mat', ...
         'annot_file', 'behav_list', 'behav_shorthands', 'jab_list', 'groundtruth_movie_list');
     load(strcat('bout_matches_', bout_match_sel_str, '.mat'), 'bout_matches_all');
-    load('FLYMAT_HumanAnnotation_v3.mat', 'flymatHumanAnnot');
+    [~, annot_file_name, ~] = fileparts(annot_file);
+    annot_file_name_elements = strsplit(annot_file_name, '-');
+    annot_file_id = annot_file_name_elements{end};
+    load(sprintf('FLYMAT_HumanAnnotation_%s.mat', annot_file_id), 'flymatHumanAnnot');
      
     movie_name_pairs = cellfun(@(c) strsplit(c, '\'), groundtruth_movie_list, 'UniformOutput', false);
     movie_name_pairs = [movie_name_pairs{:}];
@@ -19,13 +22,6 @@ function analyze_human_jaaba_annot_corr_frame_wise(bout_match_sel_str, behav_sel
         end
     end
     
-    if contains(img_format, 'eps')
-        img_format = 'epsc';
-    else
-        contains(img_format, 'png');
-        img_format = 'png';
-    end
-    
     if ~strcmp(frame_matches_mat, '')
         load(frame_matches_mat, 'frame_matches_all');
     else
@@ -40,7 +36,7 @@ function analyze_human_jaaba_annot_corr_frame_wise(bout_match_sel_str, behav_sel
             bout_matches = bout_matches_all.(behav_list{i});
 
             frame_mat_fields = {'movie', 'fly', 'frame_num', ...
-                'jaaba_score', 'annot_score', ...
+                'jaaba_score', 'annot_score', 'annot_score_pair'...
                 'is_false_negative'};
             init_frame_mat_args = [frame_mat_fields; cell(1,length(frame_mat_fields))];
             frame_matches = struct(init_frame_mat_args{:});
@@ -78,20 +74,15 @@ function analyze_human_jaaba_annot_corr_frame_wise(bout_match_sel_str, behav_sel
                     stray_fn_frames = [];
                 else
                     annot_union = bout_match.annot_union_start:(bout_match.annot_union_end-1);
-                    annot_intsct_all = arrayfun(@(s,e) s:(e-1), bout_match.annot_intsct_start,bout_match.annot_intsct_end, 'UniformOutput', false);
+                    annot_intsct_all = arrayfun(@(s,e) s:(e-1), bout_match.annot_intsct_start, bout_match.annot_intsct_end, 'UniformOutput', false);
                     annot_intsct = horzcat(annot_intsct_all{:});
-                    stray_fp_frames = [min(bout_match.jaaba_bout_start):bout_match.annot_union_start-1, bout_match.annot_union_end:(max(bout_match.jaaba_bout_end)-1)];
-                    % Take care to deal with situation where one human annotated bout deals with two JAABA bouts
-                    stray_fn_frames = [bout_match.annot_union_start:(min(bout_match.jaaba_bout_start)-1), max(bout_match.jaaba_bout_end):(bout_match.annot_union_end-1)];
-                    if length(bout_match.jaaba_bout_start) > 1
-                        stray_fn_frames_bwt_jaaba_bouts = arrayfun(@(s, e) s:(e-1), ...
-                            bout_match.jaaba_bout_end(1:end-1), bout_match.jaaba_bout_start(2:end), 'UniformOutput', false);
-                        stray_fn_frames_bwt_jaaba_bouts = horzcat(stray_fn_frames_bwt_jaaba_bouts{:});
-                        stray_fn_frames = [stray_fn_frames, stray_fn_frames_bwt_jaaba_bouts];
-                    end
+                    jaaba_all = arrayfun(@(s,e) s:(e-1), bout_match.jaaba_bout_start,bout_match.jaaba_bout_end, 'UniformOutput', false);
+                    jaaba_all = horzcat(jaaba_all{:});
+                    stray_fp_frames = setdiff(jaaba_all, annot_union);
+                    stray_fn_frames = setdiff(annot_union, jaaba_all);                
                 end
 
-                frame_slice = unique([annot_union, stray_fp_frames, stray_fn_frames]);
+                frame_slice = unique([annot_union, stray_fp_frames]);
                 for k=1:length(frame_slice)
                     frame_match = struct(init_frame_mat_args{:});
                     frame_match.movie = bout_match.movie;
@@ -102,14 +93,17 @@ function analyze_human_jaaba_annot_corr_frame_wise(bout_match_sel_str, behav_sel
                     if ~ismember(frame_slice(k),annot_intsct)
                         if ismember(frame_slice(k), stray_fp_frames)
                             frame_match.annot_score = 0;
+                            frame_match.annot_score_pair = [0, 0];
                         else
                             frame_match.annot_score = sum(per_frame_annotation(:, frame_slice(k)));
+                            frame_match.annot_score_pair = per_frame_annotation(:, frame_slice(k));
                         end
                     else
                         if length(bout_match.annot_score) ~= length(annot_intsct_all)
-                            pause(1);
+                            fprintf('Length of combined annotation score does not match with number of intersections for this bout match\n');
                         end
                         frame_match.annot_score = bout_match.annot_score(cellfun(@(intsct) ismember(frame_slice(k), intsct), annot_intsct_all));
+                        frame_match.annot_score_pair = bout_match.annot_score_pair(cellfun(@(intsct) ismember(frame_slice(k), intsct), annot_intsct_all), :);
                     end
 
                     % If an entry for the frame already exists (due to multi-match), 
@@ -209,8 +203,15 @@ function analyze_human_jaaba_annot_corr_frame_wise(bout_match_sel_str, behav_sel
             set(gca, 'xticklabel', xtick_label_cell_arr);
             hold off;
             set(gcf,'renderer','Painters');
-            saveas(gcf, strcat(strcat('jaaba_score_perframe_normed'), ...
-            '_vs_annot_perframe-',erase(behav_list{i},'_'), '-violin-', bout_match_sel_str, '.', erase(img_format, 'c')), img_format);
+            for j=1:length(img_formats)
+                if contains(img_formats{j}, 'eps')
+                    img_format = 'epsc';
+                else
+                    img_format = 'png';
+                end
+                saveas(gcf, strcat(strcat('jaaba_score_perframe_normed'), ...
+                    '_vs_annot_perframe-',erase(behav_list{i},'_'), '-violin-', bout_match_sel_str, '.', erase(img_format, 'c')), img_format);
+            end
         end
             
         % =====
@@ -252,7 +253,14 @@ function analyze_human_jaaba_annot_corr_frame_wise(bout_match_sel_str, behav_sel
             legend({'true or false positives', 'false negatives'}, 'Location', 'northwest');
             hold off;
             set(gcf,'renderer','Painters');
-            saveas(gcf, strcat('jaaba_frame_classification_count-',erase(behav_list{i},'_'), '-bar-', bout_match_sel_str, '.', erase(img_format, 'c')), img_format);
+            for j=1:length(img_formats)
+                if contains(img_formats{j}, 'eps')
+                    img_format = 'epsc';
+                else
+                    img_format = 'png';
+                end
+                saveas(gcf, strcat('jaaba_frame_classification_count-',erase(behav_list{i},'_'), '-bar-', bout_match_sel_str, '.', erase(img_format, 'c')), img_format);
+            end
         end
     end
 end

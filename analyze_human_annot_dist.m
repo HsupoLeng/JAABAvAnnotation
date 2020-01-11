@@ -1,13 +1,13 @@
 load('common-params-annot-analysis.mat');
-load('FLYMAT_HumanAnnotation_v3.mat');
+load('bout_matches_ALL_All_thres0.1.mat');
 
 struct_init_args = [behav_list; squeeze(mat2cell(zeros(4,4,3),4,4,[1,1,1]))'];
 human_annot_dist_collective = struct(struct_init_args{:});
 
 annotators_by_behav = cell(length(behav_list), 1);
 for i=1:length(behav_shorthands)
-    annotators_field = strcat(behav_shorthands{i}, '_annotators');
-    annotators_by_behav{i} = unique([flymatHumanAnnot(:).(annotators_field)]);
+    annot_score_all = cellfun(@(scores) max(scores), {bout_matches_all.(behav_list{i}).annot_score});
+    annotators_by_behav{i} = unique([bout_matches_all.(behav_list{i})(annot_score_all > 0).annotators]);
 end
 human_annot_dist_by_annotator = struct;
 for i=1:length(behav_shorthands)
@@ -17,22 +17,27 @@ for i=1:length(behav_shorthands)
     end
 end
 
+[score_a, score_b] = ind2sub([4, 4], 1:16);
+score_a = score_a - 1;
+score_b = score_b - 1;
+score_pair = [score_a; score_b]';
+score_pair_cell = num2cell(score_pair, 2);
+
 for i=1:length(behav_shorthands)
-    for j=1:length(flymatHumanAnnot)
-        scores_field = strcat(behav_shorthands{i}, '_scores');
-        annotators_field = strcat(behav_shorthands{i}, '_annotators');
-        scores = flymatHumanAnnot(j).(scores_field);
+    for k=1:length(bout_matches_all.(behav_list{i}))
+        annot_score_all = bout_matches_all.(behav_list{i})(k).annot_score;
+        if ~(annot_score_all)
+            continue;
+        end
+        [first_annotator, second_annotator] = bout_matches_all.(behav_list{i})(k).annotators{:};
+        scores = bout_matches_all.(behav_list{i})(k).annot_score_pair;
         scores(isnan(scores)) = 0;
-        [first_annotator, second_annotator] = flymatHumanAnnot(j).(annotators_field){:};
-        
-        for k=1:size(scores, 1)
-            if i==2 && j==56 && k==6 % skip one faulty bout entry in the local copy
-                continue
-            end
-            score_pair = scores(k, :) + 1;
+
+        for l=1:size(scores, 1)
+            score_pair = scores(l, :) + 1;
             human_annot_dist_collective.(behav_list{i})(score_pair(1), score_pair(2)) = ...
                 human_annot_dist_collective.(behav_list{i})(score_pair(1), score_pair(2)) + 1;
-            
+
             human_annot_dist_by_annotator.(behav_list{i}).(first_annotator)(score_pair(2), score_pair(1)) = ...
                 human_annot_dist_by_annotator.(behav_list{i}).(first_annotator)(score_pair(2), score_pair(1)) + 1;
             human_annot_dist_by_annotator.(behav_list{i}).(second_annotator)(score_pair(1), score_pair(2)) = ...
@@ -40,8 +45,6 @@ for i=1:length(behav_shorthands)
         end
     end
 end
-
-save('human_annot_dist.mat', 'human_annot_dist_collective', 'human_annot_dist_by_annotator');
     
 for i=1:length(behav_shorthands)
     human_annot_dist_collective_percent.(behav_list{i}) = ...
@@ -57,7 +60,7 @@ for i=1:length(behav_shorthands)
 end
 
 text_label_x_offset = -0.2;
-%{
+
 % ----- Generate plots for the collective analysis ----
 % Simply plot the array as is
 for i=1:length(behav_shorthands)
@@ -85,6 +88,7 @@ for i=1:length(behav_shorthands)
     yticklabels(0:3);
     set(gcf,'renderer','Painters');
     saveas(gcf, strcat('human_annotation_dist-order_preserved-', erase(behav_list{i}, '_'), '.eps'), 'epsc');
+    saveas(gcf, strcat('human_annotation_dist-order_preserved-', erase(behav_list{i}, '_'), '.png'));
 end
 
 % Ignore the annotator axis 
@@ -122,9 +126,18 @@ for i=1:length(behav_shorthands)
     yticklabels(0:3);
     set(gcf,'renderer','Painters');
     saveas(gcf, strcat('human_annotation_dist-order_ignored-', erase(behav_list{i}, '_'), '.eps'), 'epsc');
+    saveas(gcf, strcat('human_annotation_dist-order_ignored-', erase(behav_list{i}, '_'), '.png'));
 end
-%}
 
+% Save the data into more reader-friendly format
+for i=1:length(behav_shorthands)
+    human_annot_dist_collective.(behav_list{i}) = struct('score_pair', score_pair_cell, 'count', num2cell(human_annot_dist_collective.(behav_list{i})(:)));
+    human_annot_dist_by_annotator.(behav_list{i}) = structfun(@(arr) struct('score_pair_otherVSself', score_pair_cell, 'count', num2cell(arr(:))), human_annot_dist_by_annotator.(behav_list{i}), 'UniformOutput', false);
+end
+
+save('human_annot_dist.mat', 'human_annot_dist_collective', 'human_annot_dist_by_annotator');
+
+%{
 % ----- Generate plots for the by-anotator analysis -----
 for i=1:length(behav_shorthands)
     for j=1:length(annotators_by_behav{i})
@@ -178,4 +191,4 @@ for i=1:length(behav_shorthands)
         saveas(gcf, sprintf('annotation_by_%s-%s.eps', annotator, erase(behav_list{i}, '_')), 'epsc');
     end
 end
-
+%}

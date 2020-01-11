@@ -2,7 +2,7 @@
 % Parameters: where to extract data, and what behvaiours to look at
 load('common-params-annot-analysis.mat');
 
-movie_name_pairs = cellfun(@(c) strsplit(c, '\'), movie_name_list, 'UniformOutput', false);
+movie_name_pairs = cellfun(@(c) strsplit(c, '\'), groundtruth_movie_list, 'UniformOutput', false);
 
 % Create structure conforming with the format of flymatAll
 init_fields = {'movie', 'fly', 'L_t0s', 'L_t1s', 'L_scores', 'L_combined_score', 'L_annotators', 'L_is_duplicate'...
@@ -27,10 +27,10 @@ for i=1:length(behav_list)
     is_duplicate = strcat(behav_shorthands{i}, '_is_duplicate');
     
     % Iterate over movies
-    for j=1:length(movie_name_list)
+    for j=1:length(groundtruth_movie_list)
         % Extract fields for one movie
         movie_start_idx = find(contains(raw_xls, movie_name_pairs{j}{2}));
-        if j<length(movie_name_list)
+        if j<length(groundtruth_movie_list)
             movie_end_idx = find(contains(raw_xls, movie_name_pairs{j+1}{2}));
         else
             movie_end_idx = numel(raw_xls);
@@ -92,8 +92,9 @@ for i=1:length(behav_list)
                         end
                     end
                     bout_ends = true_positive_fields(l, 2:3:end-2);
-                    if max(true_positive_fields(l, 1:3:end-3)) > min(bout_ends(bout_ends>0))
-                        fprintf('Bouts dont overlap: behaviour, contents from that row\n');
+                    bout_ends = sort(bout_ends, 'descend');
+                    if max(true_positive_fields(l, 1:3:end-3)) > bout_ends(2)
+                        fprintf('Bouts dont overlap: behaviour %s, contents from that row\n', behav_shorthands{i});
                         true_positive_fields(l, :)
                         % Deal with two instances where we should pull from
                         % one row downward
@@ -117,7 +118,7 @@ for i=1:length(behav_list)
                     fprintf('Discarding this row\n');
                     true_positive_fields(rows_to_discard(z), :)
                     true_positive_fields(rows_to_discard(z), :) = [];
-                    is_duplicate_mat(rows_to_discard(z)+1,:) = [false, false];
+                    is_duplicate_mat(rows_to_discard(z)+1,:) = false(1, size(is_duplicate_mat, 2));
                     is_duplicate_mat(rows_to_discard(z), :) = [];
                     
                 end
@@ -161,4 +162,7 @@ for i=1:length(behav_list)
     end  
 end
 
-save('FLYMAT_HumanAnnotation_v3.mat', 'flymatHumanAnnot');
+[~, annot_file_name, ~] = fileparts(annot_file);
+annot_file_name_elements = strsplit(annot_file_name, '-');
+annot_file_id = annot_file_name_elements{end};
+save(sprintf('FLYMAT_HumanAnnotation_%s.mat', annot_file_id), 'flymatHumanAnnot');

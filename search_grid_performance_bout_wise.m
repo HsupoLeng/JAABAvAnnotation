@@ -24,7 +24,7 @@ function search_grid_performance_bout_wise(file_id, behav_sel, threshold, is_NoR
                 % The following FLYMAT is only correct for the selected
                 % behavior. 
                 OrgData020816_XuboCopy('D:\xubo\NewTrainingFiles-OriginalCopy', ...
-                    'TrainingSamples_genotype3.xlsx', threshold(i), is_NoRel, maxgap_allbehav, minbout_allbehav);
+                    'TrainingSamples_genotype3.xlsx', threshold(i), is_NoRel, maxgap_allbehav, minbout_allbehav, {'temp'});
                 analyze_human_jaaba_annot_corr_v3('temp', behav_sel, override_jab_list, is_NoRel, '', false, false, false, '');
                 
                 load(strcat('bout_matches_temp.mat'), 'bout_matches_all', 'bout_masks');
@@ -81,9 +81,9 @@ function search_grid_performance_bout_wise(file_id, behav_sel, threshold, is_NoR
         mincolor_mat = [zeros(size(MVJ, 1), 1), zeros(size(MVJ, 1), 1), (MVJ(:,3)/max(MVJ(:, 3)))];
         
         hold on;
-        scatter(conf_ax, MVJ(:, 4+2*(i-1)), MVJ(:, 5+2*(i-1)), 500, confcolor_mat, 's', 'LineWidth', 1.5);
-        scatter(max_ax, MVJ(:, 4+2*(i-1)), MVJ(:, 5+2*(i-1)), 200, maxcolor_mat, 'd', 'LineWidth', 1.5);
-        scatter(min_ax, MVJ(:, 4+2*(i-1)), MVJ(:, 5+2*(i-1)), 75, mincolor_mat, 'o', 'LineWidth', 1.5);
+        s1 = scatter(conf_ax, MVJ(:, 4+2*(i-1)), MVJ(:, 5+2*(i-1)), 500, confcolor_mat, 's', 'LineWidth', 1.5);
+        s2 = scatter(max_ax, MVJ(:, 4+2*(i-1)), MVJ(:, 5+2*(i-1)), 200, maxcolor_mat, 'd', 'LineWidth', 1.5);
+        s3 = scatter(min_ax, MVJ(:, 4+2*(i-1)), MVJ(:, 5+2*(i-1)), 75, mincolor_mat, 'o', 'LineWidth', 1.5);
         linkaxes([conf_ax, max_ax, min_ax]);
         max_ax.Visible = 'off';
         max_ax.XTick = [];
@@ -96,14 +96,22 @@ function search_grid_performance_bout_wise(file_id, behav_sel, threshold, is_NoR
         colormap(max_ax, unique(maxcolor_mat, 'rows'));
         colormap(min_ax, unique(mincolor_mat, 'rows'));
         set([conf_ax, max_ax, min_ax], 'Position', [0.10, 0.11, 0.685, 0.815]);
-        colorbar(conf_ax, 'Position', [0.79, 0.11, 0.0675, 0.815], 'Ticks', []);
-        colorbar(max_ax, 'Position', [0.86, 0.11, 0.0675, 0.815], 'Ticks', []);
-        colorbar(min_ax, 'Position', [0.93, 0.11, 0.0675, 0.815], 'Ticks', []);
+        c1 = colorbar(conf_ax, 'Position', [0.79, 0.11, 0.0675, 0.815], 'Ticks', [0.16, 0.49, 0.83], ...
+            'TickLabels', cellstr(num2str(threshold')));
+        c1.Label.String = 'Confidence threshold';
+        c2 = colorbar(max_ax, 'Position', [0.86, 0.11, 0.0675, 0.815], 'Ticks', [0.16, 0.49, 0.83], ...
+            'TickLabels', cellstr(num2str(maxgap')));
+        c2.Label.String = 'Max gap between bouts to merge';
+        c3 = colorbar(min_ax, 'Position', [0.93, 0.11, 0.0675, 0.815], 'Ticks', [0.16, 0.49, 0.83], ...
+            'TickLabels', cellstr(num2str(minbout')));
+        c3.Label.String = 'Min length of bouts';
         % plot the value you chose in the end as a black tick mark
-        scatter(min_ax, MVJ(ourchoice_idx, 4+2*(i-1)), MVJ(ourchoice_idx, 5+2*(i-1)), 75,'+','MarkerEdgeColor',[0 0 0],'LineWidth',1.5)
-        hold off
+        s4 = scatter(min_ax, MVJ(ourchoice_idx, 4+2*(i-1)), MVJ(ourchoice_idx, 5+2*(i-1)), 75,'+','MarkerEdgeColor',[0 0 0],'LineWidth',1.5);
+        legend(conf_ax, [s1, s2, s3, s4], {'confidence threshold', 'max gap between bouts', 'min length of a bout', 'chosen configuration'});
+        hold off;
         xlabel(conf_ax, 'Precision');
         ylabel(conf_ax, 'Recall');
+        set(gcf,'renderer','Painters');
 
         if i==1
             saveas(gcf, strcat('ManualvsJAABA_grid_performance_original-', file_id, '.png'), 'png');

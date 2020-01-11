@@ -51,9 +51,9 @@ for i=1:length(jab_file_list)
         % See OrgData function. 
         if behav_sel(j) == 1 % lunge
             maxgap = 1:3; % Original 1
-            minbehav = 2:2:6; % Original 4
+            minbehav = 1:2:5; % Original 3
             ourchoice_idx = sub2ind([length(threshold_list), length(maxgap), length(minbehav)], ...
-                find(abs(threshold_list-0.1)<0.0001), find(maxgap==1), find(minbehav==4));
+                find(abs(threshold_list-0.1)<0.0001), find(maxgap==1), find(minbehav==3));
         elseif behav_sel(j) == 2 % wing extension
             maxgap = 1:2:5; % Original 3
             minbehav= 4:2:8; % Original 6

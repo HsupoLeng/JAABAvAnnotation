@@ -1,37 +1,52 @@
 load('common-params-annot-analysis.mat');
-load('FLYMAT_HumanAnnotation_v3.mat');
+[~, annot_file_name, ~] = fileparts(annot_file);
+annot_file_name_elements = strsplit(annot_file_name, '-');
+annot_file_id = annot_file_name_elements{end};
+load(sprintf('FLYMAT_HumanAnnotation_%s.mat', annot_file_id), 'flymatHumanAnnot');
+load('frame_matches_ALL_All_thres0.1.mat', 'frame_matches_all');
+construct_from_frame_matches = true;
 
 struct_init_args = [behav_list; squeeze(mat2cell(zeros(4,4,3),4,4,[1,1,1]))'];
 human_annot_dist_by_frame = struct(struct_init_args{:});
 
+[score_a, score_b] = ind2sub([4, 4], 1:16);
+score_a = score_a - 1;
+score_b = score_b - 1;
+score_pair = [score_a; score_b]';
+score_pair_cell = num2cell(score_pair, 2);
 
 for i=1:length(behav_list)
-    count_total = 0;
-    for j=1:length(flymatHumanAnnot)
-        t0s_field = strcat(behav_shorthands{i}, '_t0s');
-        t1s_field = strcat(behav_shorthands{i}, '_t1s');
-        scores_field = strcat(behav_shorthands{i}, '_scores');
-        [count, sparse_score_mat] = convert_bout_annot_into_frame_annot(flymatHumanAnnot(j).(t0s_field), ...
-            flymatHumanAnnot(j).(t1s_field), flymatHumanAnnot(j).(scores_field));
-        count_total = [count_total, count];
-        labelled_inds = find(sparse_score_mat);
-        if ~isempty(labelled_inds)
-            labelled_by_annotator_1 = labelled_inds(logical(mod(labelled_inds, 2)));
-            labelled_only_by_annotator_2 = setdiff(labelled_inds, [labelled_by_annotator_1, labelled_by_annotator_1+1]);
-            for k=1:length(labelled_by_annotator_1)
-                score_pair = full([sparse_score_mat(labelled_by_annotator_1(k)), ...
-                    sparse_score_mat(labelled_by_annotator_1(k)+1)]) + 1;
+    if construct_from_frame_matches % Construct from frame matches, which is built on bout matches
+        frame_matches = frame_matches_all.(behav_list{i});
+        for j=1:length(frame_matches)
+            score_pair = frame_matches(j).annot_score_pair;
+            score_pair(isnan(score_pair)) = 0;
+            if any(score_pair)
+                score_pair = score_pair + 1;
                 human_annot_dist_by_frame.(behav_list{i})(score_pair(1), score_pair(2)) = ...
                     human_annot_dist_by_frame.(behav_list{i})(score_pair(1), score_pair(2)) + 1;
+            else % For human annotation, we do not count FP frames
+                continue; 
             end
-            for k=1:length(labelled_only_by_annotator_2)
-                score_pair = full([0, sparse_score_mat(labelled_only_by_annotator_2(k))]) + 1;
-                human_annot_dist_by_frame.(behav_list{i})(score_pair(1), score_pair(2)) = ...
-                    human_annot_dist_by_frame.(behav_list{i})(score_pair(1), score_pair(2)) + 1;
+        end
+    else % Construct from original FlymatHumanAnnot
+        for j=1:length(flymatHumanAnnot)
+            t0s_field = strcat(behav_shorthands{i}, '_t0s');
+            t1s_field = strcat(behav_shorthands{i}, '_t1s');
+            scores_field = strcat(behav_shorthands{i}, '_scores');
+            [~, sparse_score_mat] = convert_bout_annot_into_frame_annot(flymatHumanAnnot(j).(t0s_field), ...
+                flymatHumanAnnot(j).(t1s_field), flymatHumanAnnot(j).(scores_field));
+            [~, labelled_frame] = find(sparse_score_mat);
+            labelled_frame = unique(labelled_frame);
+            if ~isempty(labelled_frame)
+                for k=1:length(labelled_frame)
+                    score_pair = full(sparse_score_mat(:, labelled_frame(k))) + 1;
+                    human_annot_dist_by_frame.(behav_list{i})(score_pair(1), score_pair(2)) = ...
+                        human_annot_dist_by_frame.(behav_list{i})(score_pair(1), score_pair(2)) + 1;
+                end
             end
         end
     end
-    %h = histogram(count_total);
 end
 
 for i=1:length(behav_shorthands)
@@ -72,6 +87,13 @@ for i=1:length(behav_shorthands)
     yticklabels(0:3);
     set(gcf,'renderer','Painters');
     saveas(gcf, strcat('human_annotation_dist_frame_wise-order_ignored-', erase(behav_list{i}, '_'), '.eps'), 'epsc');
+    saveas(gcf, strcat('human_annotation_dist_frame_wise-order_ignored-', erase(behav_list{i}, '_'), '.png'));
 end
 
+% Save the data into more reader-friendly format
+for i=1:length(behav_shorthands)
+    human_annot_dist_by_frame.(behav_list{i}) = struct('score_pair', score_pair_cell, 'count', num2cell(human_annot_dist_by_frame.(behav_list{i})(:)));
+end
+
+save('human_annot_dist_by_frame.mat', 'human_annot_dist_by_frame');
 

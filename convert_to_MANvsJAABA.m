@@ -3,7 +3,10 @@
 function convert_to_MANvsJAABA(file_id, behav_sel, override_jab_list, is_NoRel)
     load('common-params-annot-analysis.mat', ...
              'annot_file', 'behav_list', 'behav_shorthands', 'jab_list', 'groundtruth_movie_list');
-    load('FLYMAT_HumanAnnotation_v3.mat', 'flymatHumanAnnot');
+    [~, annot_file_name, ~] = fileparts(annot_file);
+    annot_file_name_elements = strsplit(annot_file_name, '-');
+    annot_file_id = annot_file_name_elements{end};
+    load(sprintf('FLYMAT_HumanAnnotation_%s.mat', annot_file_id), 'flymatHumanAnnot');
     
     if is_NoRel
         behav_list = {'LungeNewNoRel', 'WingExtNoRel', 'HeadbuttNew'};

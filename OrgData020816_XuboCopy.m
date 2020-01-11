@@ -1,4 +1,4 @@
-function OrgData020816_XuboCopy(expfolder,infofile,thres,isNoRel, maxgaps, minbouts)
+function OrgData020816_XuboCopy(expfolder,infofile,thres,isNoRel, maxgaps, minbouts, flymat_id)
     if length(strfind(expfolder, '/') > 0)
         parts = strsplit(expfolder,'/');
     elseif length(strfind(expfolder,'\') > 0)
@@ -50,9 +50,6 @@ function OrgData020816_XuboCopy(expfolder,infofile,thres,isNoRel, maxgaps, minbo
                             end
                             clear scoresmat; 
                             scoresmat = load(tempname);
-                            % MODIFIED: threshold is changed to 0 to test
-                            % its effect on false positive/false negative
-                            % rate
                             A = confidence_changer_with_processingMPW(scoresmat.allScores, thres); %(Scores, threshold)
                             B = smoothing(A,frameshift,maxgaps.L,minbouts.L);  %(Scores, frameshift, max gap, min bout)
                             scoresgalore(cnt).lunge = B;
@@ -62,9 +59,6 @@ function OrgData020816_XuboCopy(expfolder,infofile,thres,isNoRel, maxgaps, minbo
                             end
                             clear scoresmat; 
                             scoresmat = load(tempname);
-                            % MODIFIED: threshold is changed to 0 to test
-                            % its effect on false positive/false negative
-                            % rate
                             A = confidence_changer_with_processingMPW(scoresmat.allScores,thres);
                             B = smoothing(A,frameshift,maxgaps.HB,minbouts.HB);
                             scoresgalore(cnt).headbutt = B;
@@ -74,9 +68,6 @@ function OrgData020816_XuboCopy(expfolder,infofile,thres,isNoRel, maxgaps, minbo
                             end
                             clear scoresmat; 
                             scoresmat = load(tempname);
-                            % MODIFIED: threshold is changed to 0 to test
-                            % its effect on false positive/false negative
-                            % rate
                             A = confidence_changer_with_processingMPW(scoresmat.allScores,thres);
                             B = smoothing(A,frameshift,maxgaps.WE,minbouts.WE);
                             scoresgalore(cnt).wingext = B;
@@ -252,8 +243,11 @@ function OrgData020816_XuboCopy(expfolder,infofile,thres,isNoRel, maxgaps, minbo
     %         end;
         end;
         end;
+        
     output_dir = 'D:\xubo\code\annot-analysis';
-    filename = fullfile(output_dir, 'FLYMAT_MNL-KA JAABA training samples_temp.mat');
-    save(filename,'flymatAll','-v7.3');
+    for i=1:length(flymat_id)
+        filename = fullfile(output_dir, strcat('FLYMAT_MNL-KA JAABA training samples_', flymat_id{i}, '.mat'));
+        save(filename,'flymatAll','-v7.3');
+    end
     cd(src_folder);
 end
