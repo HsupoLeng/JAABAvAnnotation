@@ -1,3 +1,5 @@
+% Compile and draw figures for distribution of human annotation confidence
+% (by frame)
 load('common-params-annot-analysis.mat');
 [~, annot_file_name, ~] = fileparts(annot_file);
 annot_file_name_elements = strsplit(annot_file_name, '-');

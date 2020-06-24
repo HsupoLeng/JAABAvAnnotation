@@ -1,3 +1,6 @@
+% Analyze correlation between JAABA confidence score and human annotation
+% combined confidence score (by bout)
+% Output the violin plot
 function [recall_rates_per_cat_all_behav, score_post_analysis_struct] = analyze_human_jaaba_annot_corr_v3(flymat_id, behav_sel, override_jab_list, is_NoRel, bout_matches_mat, plot_bar, plot_violin, plot_box, img_formats)
     load('common-params-annot-analysis.mat', ...
          'annot_file', 'behav_list', 'behav_shorthands', 'jab_list', 'groundtruth_movie_list');
@@ -7,11 +10,6 @@ function [recall_rates_per_cat_all_behav, score_post_analysis_struct] = analyze_
     load(sprintf('FLYMAT_HumanAnnotation_%s.mat', annot_file_id), 'flymatHumanAnnot');
     flymat_file = strcat('FLYMAT_MNL-KA JAABA training samples_', flymat_id, '.mat'); 
     load(flymat_file, 'flymatAll');
-
-%     % For later use of flymat_id, shorten the names a bit
-%     flymat_id_elems = strsplit(flymat_id, '_');
-%     flymat_id_elems{1} = regexp(flymat_id_elems{1} ,'[^0-9]+', 'match');
-%     flymat_id = strjoin([flymat_id_elems{:}], '_'); 
     
     movie_name_pairs = cellfun(@(c) strsplit(c, '\'), groundtruth_movie_list, 'UniformOutput', false);
     if is_NoRel
@@ -364,18 +362,6 @@ function [recall_rates_per_cat_all_behav, score_post_analysis_struct] = analyze_
         false_negat_idxs = [bout_matches_all.(behav_list{i}).virtual_jaaba_match];
         false_negat_idxs_w_duplicate = repelem(false_negat_idxs, associated_annot_per_bout_match);
         
-%         % Calculate recalls without counting bout matches with
-%         % multi_match=1
-%         multi_match_idxs = [bout_matches_all.(behav_list{i})(bout_masks{i}).multi_match];
-%         multi_match_idxs(isnan(multi_match_idxs)) = 0;
-%         virt_annot_score_no_mm = annot_score(bitand(false_negat_idxs, ~multi_match_idxs)); 
-%         true_annot_score_no_mm = annot_score(bitand(~false_negat_idxs, ~multi_match_idxs));
-%         false_negat_accum_no_mm = hist(virt_annot_score_no_mm, human_annot_scores);
-%         positive_accum_no_mm = hist(true_annot_score_no_mm, human_annot_scores);
-%         recalls.(behav_list{i}) = sum(positive_accum_no_mm(2:end))/(sum(false_negat_accum_no_mm(2:end))+sum(positive_accum_no_mm(2:end)));
-%         collect_accum_no_mm = [positive_accum_no_mm(2:end)', false_negat_accum_no_mm(2:end)'];
-%         recall_rates = collect_accum_no_mm(:,1)./sum(collect_accum_no_mm, 2);
-                   
         % Calculate precision and recall
         virt_annot_score_max = annot_score_max(false_negat_idxs); 
         true_annot_score_max = annot_score_max(~false_negat_idxs);

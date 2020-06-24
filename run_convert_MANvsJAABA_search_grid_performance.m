@@ -1,3 +1,5 @@
+% Search grid of hyperparameters for precision and recall on the fully
+% trained classifiers
 close all;
 load('common-params-annot-analysis.mat', 'all_jaaba_folder_list', 'jab_list');
 

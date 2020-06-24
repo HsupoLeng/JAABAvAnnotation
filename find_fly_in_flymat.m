@@ -1,3 +1,5 @@
+% Find a fly in FLYMAT or bout_match_all as specified by movie_name and fly
+% ID in that movie
 function fly_idx = find_fly_in_flymat(flymat, movie_name, fly_number, is_cell_arr)
     if is_cell_arr
         movie_arr = [flymat.movie];

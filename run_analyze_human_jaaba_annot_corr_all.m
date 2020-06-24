@@ -1,3 +1,5 @@
+% Run analysis of correlation between human annotation and JAABA predition
+% for different sets of analyses
 load('common-params-annot-analysis.mat', 'all_jaaba_folder_list', 'jab_list');
 % Initialize
 plot_bar_bout_wise = true; 

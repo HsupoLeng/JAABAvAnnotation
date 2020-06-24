@@ -1,3 +1,4 @@
+% Run compile_fp_fn_numbers for all classifiers
 load('common-params-annot-analysis.mat');
 all_paths_in_dir = dir('D:\xubo\code\annot-analysis\bout_frame_matches');
 all_files = all_paths_in_dir(~[all_paths_in_dir.isdir]);

@@ -1,3 +1,5 @@
+% Randomize human confidence values for bout, and recompute
+% per-confidence-category precision and recall, and re-draw violin plots
 bout_match_str_ori = 'bout_matches_ALL_All_thres0.1'; 
 frame_match_str_ori = 'frame_matches_ALL_All_thres0.1';
 bout_match_str_new = strcat(bout_match_str_ori, '_rand_persv_ratio');
@@ -109,10 +111,7 @@ x_lims = xlim;
 line([x_lims(1), x_lims(2)], [-2, -2], 'Linestyle', '--', 'Color', 'k');
 hold off; 
 set(gcf,'renderer','Painters');
-% yticks(fliplr([log10(0.999), log10(0.99), log10(0.9), log10(0.5), -1, -2, -3, -10, -50, -100, -150]));
-% yticklabels(fliplr([0.999, 0.99, 0.9, 0.5, 10.^[-1, -2, -3, -10, -50, -100, -150]]));
 yticks(fliplr(10.^[-1, -2, -3, -10, -50, -100, -150]));
-% yticklabels(fliplr(10.^[-1, -2, -3, -10, -50, -100, -150]));
 ylabel('p value');
 rand_p_signif_count = sum(p_val_all_rand < 0.01);
 xticks(1:3);
@@ -148,10 +147,8 @@ function [p_val_arr, pairwise_test_p_val_struct] = run_stat_signif_jaaba_scores(
             chosen_idx_all(:, j) = chosen_idx;
         end
 
-%         annot_score_chosen = annot_score_p(chosen_idx_all(:));
         jaaba_score = score_post_analysis_struct(i).jaaba_score;
         jaaba_score_p = jaaba_score(annot_score_max > 0);
-%         jaaba_score_chosen = jaaba_score_max(chosen_idx_all(:));
 
         [p_val_arr(i), ~, stats] = kruskalwallis(jaaba_score_p, annot_score_p, disp);
 %         pairwise_test_cell{i} = multcompare(stats,  'CType', 'bonferroni', 'Display', disp);

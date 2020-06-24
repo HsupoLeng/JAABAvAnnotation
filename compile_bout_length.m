@@ -1,3 +1,4 @@
+% Compile bout length histogram for human annotation and JAABA prediction
 close all;
 load('bout_matches_ALL_all_thres0.1_nominlength.mat', 'bout_matches_all');
 load('common-params-annot-analysis.mat');
@@ -214,9 +215,4 @@ for i=1:length(behav_list)
     set(gcf,'renderer','Painters');
 %     saveas(gcf, sprintf('jaaba_annotated_bout_length_disttribution-%s.png', behav), 'png');
 %     saveas(double(gcf), sprintf('jaaba_annotated_bout_length_disttribution-%s.eps', behav), 'epsc');
-    
-    % Pre-process the by-annotator data: collect all annotations by one
-    % annotator, and bin according to the score
-    
-    % Draw area plot for each annotator
 end

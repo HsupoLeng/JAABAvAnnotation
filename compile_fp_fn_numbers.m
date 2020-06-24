@@ -1,3 +1,5 @@
+% Compile and save count of false positives and false negatives per movie,
+% per confidence category and per fly
 function compile_fp_fn_numbers(behav_sel, match_sel_str, is_frame_matches)
     if is_frame_matches
         load(strcat('frame_matches_', match_sel_str, '.mat'), 'frame_matches_all');
@@ -18,7 +20,6 @@ function compile_fp_fn_numbers(behav_sel, match_sel_str, is_frame_matches)
             continue;
         end
         
-%         annot_score = uint8(full(cellfun(@(scores) max(scores), {matches_all.(behav_list{i}).annot_score})));
         annot_score_all = horzcat(matches_all.(behav_list{i}).annot_score);
         associated_annot_per_bout_match = arrayfun(@(s) length(s.annot_score), matches_all.(behav_list{i}));
         false_positive_idxs = cellfun(@(scores) max(scores), {matches_all.(behav_list{i}).annot_score}) == 0;

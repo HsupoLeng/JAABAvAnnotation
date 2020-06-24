@@ -1,3 +1,6 @@
+% Analyze correlation between JAABA confidence score and human annotation
+% combined confidence score (by frame)
+% Output the violin plot
 function score_post_analysis_struct = analyze_human_jaaba_annot_corr_frame_wise(bout_match_sel_str, behav_sel, override_jab_list, is_noRel, frame_matches_mat, plot_bar, plot_violin, img_formats)
     load('common-params-annot-analysis.mat', ...
         'annot_file', 'behav_list', 'behav_shorthands', 'jab_list', 'groundtruth_movie_list');

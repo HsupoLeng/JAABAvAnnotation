@@ -1,3 +1,5 @@
+% Compile and draw figures for distribution of human annotation confidence
+% (by bout)
 load('common-params-annot-analysis.mat');
 load('bout_matches_ALL_All_thres0.1.mat');
 
@@ -136,59 +138,3 @@ for i=1:length(behav_shorthands)
 end
 
 save('human_annot_dist.mat', 'human_annot_dist_collective', 'human_annot_dist_by_annotator');
-
-%{
-% ----- Generate plots for the by-anotator analysis -----
-for i=1:length(behav_shorthands)
-    for j=1:length(annotators_by_behav{i})
-        annotator = annotators_by_behav{i}{j};
-        figure(6+4*(i-1)+j);
-        hold on;
-        imagesc(human_annot_dist_by_annotator_percent.(behav_list{i}).(annotator));
-        set(gca,'YDir','normal');
-        colormap parula;
-        cb = colorbar;
-        %cb.TickLabels = strcat(cellstr(num2str(round(cb.Ticks(:)*100, 1))), '%');
-        dont_care_gray = [0.4, 0.4, 0.4];
-        dont_care_line_color = 'k';
-        patch([0.5, 0.5, 1.5, 1.5], [1.5, 0.5, 0.5, 1.5], dont_care_gray, 'EdgeColor', 'none');
-        plot(0.5:1.5, 0.5:1.5, dont_care_line_color, 0.5:1.5, 1.5:-1:0.5, dont_care_line_color);
-        hold off;
-        text_xloc = repelem(1:4, 4)+text_label_x_offset;
-        text_yloc = repmat(1:4, 1, 4);
-        text_contents = strcat(cellstr(num2str(round(human_annot_dist_by_annotator_percent.(behav_list{i}).(annotator)(1:end)'*100, 1))), '%');
-        text_contents = cellfun(@(x,y) {x;strcat('(', num2str(y), ')')}, text_contents, num2cell(human_annot_dist_by_annotator.(behav_list{i}).(annotator)(:), 2), 'UniformOutput', false);
-        text(text_xloc(2:end), text_yloc(2:end), text_contents(2:end));
-        title({sprintf('Annotation by %s (posited against another annotator)', annotator), strcat('behaviour: ', erase(behav_list{i}, '_'))});
-        xlabel('Confidence score by this annotator');
-        ylabel('Confidence score by another annotator');
-        xticks(1:4);
-        xticklabels(0:3);
-        yticks(1:4);
-        yticklabels(0:3);
-        set(gcf,'renderer','Painters');
-        saveas(gcf, sprintf('annotation_by_%s-%s-compared_to_another.eps', annotator, erase(behav_list{i}, '_')), 'epsc');
-    end
-end
-
-for i=1:length(behav_shorthands)
-    for j=1:length(annotators_by_behav{i})
-        annotator = annotators_by_behav{i}{j};
-        figure(18+4*(i-1)+j);
-        hold on;
-        sum_by_score_category = sum(human_annot_dist_by_annotator.(behav_list{i}).(annotator));
-        bar(1:3, sum_by_score_category(2:end), 'FaceColor', 'b', 'FaceAlpha', 0.5);
-        bar(0, sum_by_score_category(1), 'FaceColor', 'm', 'FaceAlpha', 0.5);
-        title({sprintf('%s''s annotation confidence score distribution', annotator), strcat('behaviour: ', erase(behav_list{i}, '_'))});
-        xticks(0:3);
-        curr_ylim = ylim;
-        ylim([curr_ylim(1), int16(1.2*curr_ylim(2))]);
-        yticks(unique(int16(yticks)));
-        legend('No. of bouts this annotator labelled with score 1, 2 or 3', ...
-            'No. of bouts another annotator labelled but this annotator did not');
-        hold off;
-        set(gcf,'renderer','Painters');
-        saveas(gcf, sprintf('annotation_by_%s-%s.eps', annotator, erase(behav_list{i}, '_')), 'epsc');
-    end
-end
-%}
