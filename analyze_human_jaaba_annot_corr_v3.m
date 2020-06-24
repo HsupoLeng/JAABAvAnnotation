@@ -474,19 +474,19 @@ function [recall_rates_per_cat_all_behav, score_post_analysis_struct] = analyze_
                     jaaba_score_quantile_struct(m+1).annot_score = m;
                     scores_one_cat = true_jaaba_score(true_annot_score_max == m);
                     if ~isempty(scores_one_cat)
-                        jaaba_score_quantile_struct(m+1).jaaba_posit_quantiles = quantile(scores_one_cat, [0.1, 0.25, 0.5, 0.75, 0.9]);
+                        jaaba_score_quantile_struct(m+1).jaaba_posit_quantiles = quantile(scores_one_cat, [0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]);
                     else
                         jaaba_score_quantile_struct(m+1).jaaba_posit_quantiles = nan(5, 1);
                     end
                     scores_one_cat = virt_jaaba_score(virt_annot_score_max == m);
                     if ~isempty(scores_one_cat)
-                        jaaba_score_quantile_struct(m+1).jaaba_negat_quantiles = quantile(scores_one_cat, [0.1, 0.25, 0.5, 0.75, 0.9]);
+                        jaaba_score_quantile_struct(m+1).jaaba_negat_quantiles = quantile(scores_one_cat, [0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]);
                     else
                         jaaba_score_quantile_struct(m+1).jaaba_negat_quantiles = nan(5, 1);
                     end
                     scores_one_cat = horzcat(true_jaaba_score(true_annot_score_max == m), virt_jaaba_score(virt_annot_score_max == m));
                     if ~isempty(scores_one_cat)
-                        jaaba_score_quantile_struct(m+1).jaaba_combined_quantiles = quantile(scores_one_cat, [0.1, 0.25, 0.5, 0.75, 0.9]);
+                        jaaba_score_quantile_struct(m+1).jaaba_combined_quantiles = quantile(scores_one_cat, [0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]);
                     else
                         jaaba_score_quantile_struct(m+1).jaaba_combined_quantiles = nan(5, 1);
                     end
@@ -494,9 +494,9 @@ function [recall_rates_per_cat_all_behav, score_post_analysis_struct] = analyze_
                 end
                 jaaba_score_quantile_struct(8).data_type = 'train';
                 jaaba_score_quantile_struct(8).annot_score = nan;
-                jaaba_score_quantile_struct(8).jaaba_posit_quantiles = quantile(positive_train_jaaba_score, [0.1, 0.25, 0.5, 0.75, 0.9]);
-                jaaba_score_quantile_struct(8).jaaba_negat_quantiles = quantile(negative_train_jaaba_score, [0.1, 0.25, 0.5, 0.75, 0.9]);
-                jaaba_score_quantile_struct(8).jaaba_combined_quantiles = quantile(horzcat(positive_train_jaaba_score, negative_train_jaaba_score), [0.1, 0.25, 0.5, 0.75, 0.9]);
+                jaaba_score_quantile_struct(8).jaaba_posit_quantiles = quantile(positive_train_jaaba_score, [0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]);
+                jaaba_score_quantile_struct(8).jaaba_negat_quantiles = quantile(negative_train_jaaba_score, [0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]);
+                jaaba_score_quantile_struct(8).jaaba_combined_quantiles = quantile(horzcat(positive_train_jaaba_score, negative_train_jaaba_score), [0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]);
                 jaaba_score_quantile_struct_all.(behav_list{i}).(stats_to_plot{k}) = jaaba_score_quantile_struct; 
                 
                 all_plotted_scores = [true_jaaba_score, virt_jaaba_score, positive_train_jaaba_score, negative_train_jaaba_score];
@@ -579,6 +579,6 @@ function [recall_rates_per_cat_all_behav, score_post_analysis_struct] = analyze_
             end
         end
         recall_rates_per_cat_all_behav(i, :) = recall_rates; 
-        save(sprintf('jaaba_score_quantile_struct_all-%s.mat', flymat_id), 'jaaba_score_quantile_struct_all');
     end
+    save(sprintf('jaaba_score_quantile_struct_all-%s.mat', flymat_id), 'jaaba_score_quantile_struct_all');
 end

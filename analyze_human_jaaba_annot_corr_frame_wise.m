@@ -1,4 +1,4 @@
-function analyze_human_jaaba_annot_corr_frame_wise(bout_match_sel_str, behav_sel, override_jab_list, is_noRel, frame_matches_mat, plot_bar, plot_violin, img_formats)
+function score_post_analysis_struct = analyze_human_jaaba_annot_corr_frame_wise(bout_match_sel_str, behav_sel, override_jab_list, is_noRel, frame_matches_mat, plot_bar, plot_violin, img_formats)
     load('common-params-annot-analysis.mat', ...
         'annot_file', 'behav_list', 'behav_shorthands', 'jab_list', 'groundtruth_movie_list');
     load(strcat('bout_matches_', bout_match_sel_str, '.mat'), 'bout_matches_all');
@@ -137,6 +137,9 @@ function analyze_human_jaaba_annot_corr_frame_wise(bout_match_sel_str, behav_sel
     human_annot_scores = 0:6;
     xtick_label_cell_arr = strtrim(cellstr(num2str(human_annot_scores')));
     xtick_label_cell_arr{end+1} = 'training';
+    score_post_analysis_struct = struct('annot_score', [], 'jaaba_score', [], 'false_negat_idxs', []);
+    score_post_analysis_struct(1) = [];
+    jaaba_score_quantile_struct_all = struct();
     for i=1:length(behav_list)
         if ~ismember(i, behav_sel)
             continue; 
@@ -155,6 +158,10 @@ function analyze_human_jaaba_annot_corr_frame_wise(bout_match_sel_str, behav_sel
         true_jaaba_score = jaaba_score(~false_negat_mask);
         virt_annot_score = annot_score(false_negat_mask); 
         true_annot_score = annot_score(~false_negat_mask);
+        
+        score_post_analysis_struct(find(behav_sel == i)).annot_score = annot_score; 
+        score_post_analysis_struct(find(behav_sel == i)).jaaba_score = jaaba_score; 
+        score_post_analysis_struct(find(behav_sel == i)).false_negat_idxs = find(false_negat_mask);
         
         false_negat_accum = hist(virt_annot_score, human_annot_scores);
         positive_accum = hist(true_annot_score, human_annot_scores);
@@ -184,6 +191,38 @@ function analyze_human_jaaba_annot_corr_frame_wise(bout_match_sel_str, behav_sel
             legend([v1(end).ViolinPlot, v2(2).ViolinPlot, v3(end).ViolinPlot, v4(end).ViolinPlot], {'true or false positive', 'false negative', 'positive training', 'negative training'},...
             'NumColumns', 2, 'Location', 'southwest');
             offset_hack = 1;
+            
+            jaaba_score_quantile_struct = struct();
+            for m=human_annot_scores
+                jaaba_score_quantile_struct(m+1).data_type = 'test';
+                jaaba_score_quantile_struct(m+1).annot_score = m;
+                scores_one_cat = true_jaaba_score(true_annot_score == m);
+                if ~isempty(scores_one_cat)
+                    jaaba_score_quantile_struct(m+1).jaaba_posit_quantiles = quantile(scores_one_cat, [0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]);
+                else
+                    jaaba_score_quantile_struct(m+1).jaaba_posit_quantiles = nan(5, 1);
+                end
+                scores_one_cat = virt_jaaba_score(virt_annot_score == m);
+                if ~isempty(scores_one_cat)
+                    jaaba_score_quantile_struct(m+1).jaaba_negat_quantiles = quantile(scores_one_cat, [0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]);
+                else
+                    jaaba_score_quantile_struct(m+1).jaaba_negat_quantiles = nan(5, 1);
+                end
+                scores_one_cat = horzcat(true_jaaba_score(true_annot_score == m), virt_jaaba_score(virt_annot_score == m));
+                if ~isempty(scores_one_cat)
+                    jaaba_score_quantile_struct(m+1).jaaba_combined_quantiles = quantile(scores_one_cat, [0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]);
+                else
+                    jaaba_score_quantile_struct(m+1).jaaba_combined_quantiles = nan(5, 1);
+                end
+
+            end
+            jaaba_score_quantile_struct(8).data_type = 'train';
+            jaaba_score_quantile_struct(8).annot_score = nan;
+            jaaba_score_quantile_struct(8).jaaba_posit_quantiles = quantile(positive_train_jaaba_score, [0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]);
+            jaaba_score_quantile_struct(8).jaaba_negat_quantiles = quantile(negative_train_jaaba_score, [0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]);
+            jaaba_score_quantile_struct(8).jaaba_combined_quantiles = quantile(horzcat(positive_train_jaaba_score, negative_train_jaaba_score), [0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]);
+            jaaba_score_quantile_struct_all.(behav_list{i}) = jaaba_score_quantile_struct; 
+
 
             all_plotted_scores = [true_jaaba_score, virt_jaaba_score, positive_train_jaaba_score, negative_train_jaaba_score];
             axis([-0.5+offset_hack, 7.5+offset_hack, min(all_plotted_scores)-1.2, ...
@@ -263,4 +302,5 @@ function analyze_human_jaaba_annot_corr_frame_wise(bout_match_sel_str, behav_sel
             end
         end
     end
+    save(sprintf('jaaba_score_quantile_struct_all-%s_frame_wise.mat', bout_match_sel_str), 'jaaba_score_quantile_struct_all');
 end

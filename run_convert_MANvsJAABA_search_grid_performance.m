@@ -29,6 +29,9 @@ behav_sel = [1,2,3]; % Behavior labels, [lunge, wingExtension, headbutt]
 is_frame_wise = false; % Flag to use frame-based performance metrics (precision and recall) or bout-based
 
 for i=1:length(jab_file_list)
+    if i ~= 1 
+        continue; 
+    end
     % Predict using the classifiers
     JAABADetect(all_jaaba_folder_list, 'jabfiles', jab_file_list{i});
     

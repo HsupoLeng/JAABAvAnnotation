@@ -8,7 +8,7 @@ load(sprintf('FLYMAT_HumanAnnotation_%s.mat', annot_file_id), 'flymatHumanAnnot'
 
 
 human_annot_scores = 0:6; 
-wingext_bin_edges = [0,6,30,60:60:300,600]-0.5;
+wingext_bin_edges = [0,6,30,60:60:300,600, inf]-0.5;
 % wingext_bin_edges = (1:16)-0.5;
 legend_wingext = arrayfun(@(bin_start, bin_end) sprintf('%d~%d', bin_start, bin_end), wingext_bin_edges(1:end-1), wingext_bin_edges(2:end), 'UniformOutput', false);
 annot_intsct_bout_length_binned_histo_cell = cell(length(behav_list), length(human_annot_scores));
@@ -16,7 +16,6 @@ annot_union_bout_length_binned_histo_cell = cell(length(behav_list), length(huma
 jaaba_bout_length_binned_histo_cell = cell(length(behav_list), length(human_annot_scores));
 
 for i=1:length(behav_list)
-    
     behav = behav_list{i};
     bout_matches = bout_matches_all.(behav);
     
@@ -65,8 +64,8 @@ for i=1:length(behav_list)
         sprintf('behaviour: %s', strrep(behav, '_', ''))});
 %     xlim([0, inf]);
     set(gcf,'renderer','Painters');
-    saveas(gcf, sprintf('human_annotated_bout_length_intersection_histogram-%s.png', behav), 'png');
-    saveas(gcf, sprintf('human_annotated_bout_length_intersection_histogram-%s.eps', behav), 'epsc');
+%     saveas(gcf, sprintf('human_annotated_bout_length_intersection_histogram-%s.png', behav), 'png');
+%     saveas(gcf, sprintf('human_annotated_bout_length_intersection_histogram-%s.eps', behav), 'epsc');
     
     figure();
     if i == 2
@@ -84,8 +83,8 @@ for i=1:length(behav_list)
         sprintf('behaviour: %s', strrep(behav, '_', ''))});
 %     xlim([0, inf]);
     set(gcf,'renderer','Painters');
-    saveas(gcf, sprintf('human_annotated_bout_length_union_histogram-%s.png', behav), 'png');
-    saveas(double(gcf), sprintf('human_annotated_bout_length_union_histogram-%s.eps', behav), 'epsc');
+%     saveas(gcf, sprintf('human_annotated_bout_length_union_histogram-%s.png', behav), 'png');
+%     saveas(double(gcf), sprintf('human_annotated_bout_length_union_histogram-%s.eps', behav), 'epsc');
 
     figure();
     if i == 2
@@ -106,8 +105,8 @@ for i=1:length(behav_list)
         xticklabels(cellstr(num2str(h_obj.BinEdges'+0.5)));
     end
     set(gcf,'renderer','Painters');
-    saveas(gcf, sprintf('jaaba_bout_length_histogram-%s.png', behav), 'png');
-    saveas(double(gcf), sprintf('jaaba_bout_length_histogram-%s.eps', behav), 'epsc');
+%     saveas(gcf, sprintf('jaaba_bout_length_histogram-%s.png', behav), 'png');
+%     saveas(double(gcf), sprintf('jaaba_bout_length_histogram-%s.eps', behav), 'epsc');
     
     % Draw area plots for binned bout lengths, for human annotation
     % intersection, union, and JAABA annotaion, respectively
@@ -120,9 +119,9 @@ for i=1:length(behav_list)
         min_length = min(horzcat(annot_intsct_bout_length_binned{:}));
         % max_length = max(horzcat(annot_intsct_bout_length_binned{:}));
         if i == 1
-            max_length = 12;
+            max_length = 20;
         else
-            max_length = 10;
+            max_length = 15;
         end
         histcount_cell = cellfun(@(lengths) histcounts(lengths, 'BinMethod', 'integers', 'BinLimits', [min_length, max_length]), annot_intsct_bout_length_binned, 'UniformOutput', false);
         histcount_cell_augmented = cellfun(@(h) [(min_length:max_length)', h'], histcount_cell, 'UniformOutput', false);
@@ -143,8 +142,8 @@ for i=1:length(behav_list)
     title({'Human annotated bout length (intersection) distribution', 'by human annotation combined score', ...
         sprintf('behaviour: %s', strrep(behav, '_', ''))});
     set(gcf,'renderer','Painters');
-    saveas(gcf, sprintf('human_annotated_bout_length_intersection_disttribution-%s.png', behav), 'png');
-    saveas(double(gcf), sprintf('human_annotated_bout_length_intersection_disttribution-%s.eps', behav), 'epsc');
+%     saveas(gcf, sprintf('human_annotated_bout_length_intersection_disttribution-%s.png', behav), 'png');
+%     saveas(double(gcf), sprintf('human_annotated_bout_length_intersection_disttribution-%s.eps', behav), 'epsc');
     
     % Human annotation union
     figure();
@@ -155,9 +154,9 @@ for i=1:length(behav_list)
         min_length = min(horzcat(annot_union_bout_length_binned{:}));
         % max_length = max(horzcat(annot_intsct_bout_length_binned{:}));
         if i == 1
-            max_length = 12;
+            max_length = 20;
         else
-            max_length = 10;
+            max_length = 15;
         end
         histcount_cell = cellfun(@(lengths) histcounts(lengths, 'BinMethod', 'integers', 'BinLimits', [min_length, max_length]), annot_union_bout_length_binned, 'UniformOutput', false);
         histcount_cell_augmented = cellfun(@(h) [(min_length:max_length)', h'], histcount_cell, 'UniformOutput', false);
@@ -178,8 +177,8 @@ for i=1:length(behav_list)
     title({'Human annotated bout length (union) distribution', 'by human annotation combined score', ...
         sprintf('behaviour: %s', strrep(behav, '_', ''))});
     set(gcf,'renderer','Painters');
-    saveas(gcf, sprintf('human_annotated_bout_length_union_disttribution-%s.png', behav), 'png');
-    saveas(double(gcf), sprintf('human_annotated_bout_length_union_disttribution-%s.eps', behav), 'epsc');
+%     saveas(gcf, sprintf('human_annotated_bout_length_union_disttribution-%s.png', behav), 'png');
+%     saveas(double(gcf), sprintf('human_annotated_bout_length_union_disttribution-%s.eps', behav), 'epsc');
     
     % Jaaba annotation
     figure();
@@ -190,9 +189,9 @@ for i=1:length(behav_list)
         min_length = min(horzcat(jaaba_bout_length_binned{:}));
         % max_length = max(horzcat(annot_intsct_bout_length_binned{:}));
         if i == 1
-            max_length = 12;
+            max_length = 20;
         else
-            max_length = 10;
+            max_length = 15;
         end
         histcount_cell = cellfun(@(lengths) histcounts(lengths, 'BinMethod', 'integers', 'BinLimits', [min_length, max_length]), jaaba_bout_length_binned, 'UniformOutput', false);
         histcount_cell_augmented = cellfun(@(h) [(min_length:max_length)', h'], histcount_cell, 'UniformOutput', false);
@@ -213,8 +212,8 @@ for i=1:length(behav_list)
     title({'JAABA bout length distribution', 'by human annotation combined score', ...
         sprintf('behaviour: %s', strrep(behav, '_', ''))});
     set(gcf,'renderer','Painters');
-    saveas(gcf, sprintf('jaaba_annotated_bout_length_disttribution-%s.png', behav), 'png');
-    saveas(double(gcf), sprintf('jaaba_annotated_bout_length_disttribution-%s.eps', behav), 'epsc');
+%     saveas(gcf, sprintf('jaaba_annotated_bout_length_disttribution-%s.png', behav), 'png');
+%     saveas(double(gcf), sprintf('jaaba_annotated_bout_length_disttribution-%s.eps', behav), 'epsc');
     
     % Pre-process the by-annotator data: collect all annotations by one
     % annotator, and bin according to the score

@@ -1,4 +1,5 @@
 bout_match_str_ori = 'bout_matches_ALL_All_thres0.1'; 
+frame_match_str_ori = 'frame_matches_ALL_All_thres0.1';
 bout_match_str_new = strcat(bout_match_str_ori, '_rand_persv_ratio');
 s_temp = load(strcat(bout_match_str_ori, '.mat'));
 bout_matches_all_ori = s_temp.bout_matches_all; 
@@ -9,7 +10,7 @@ behav_sel = [1, 2, 3];
 override_jab_list = {};
 is_NoRel = false;
 plot_bar = false;
-plot_violin = false;
+plot_violin = true;
 plot_box = false;
 img_format = {'png', 'eps'};
 num_repeat = 50;
@@ -20,6 +21,9 @@ gen_new_randomization = false;
 % then run pair-wise multi-comparison Bofferroni test
 [~, score_post_analysis_struct] = analyze_human_jaaba_annot_corr_v3(flymat_id, behav_sel, override_jab_list, is_NoRel, strcat(bout_match_str_ori, '.mat'), plot_bar, plot_violin, plot_box, img_format);
 [p_val_arr_ori, pairwise_test_p_val_ori] = run_stat_signif_jaaba_scores(behav_list, score_post_analysis_struct, 'on');
+
+score_post_analysis_struct_frame_wise = analyze_human_jaaba_annot_corr_frame_wise(flymat_id, behav_sel, override_jab_list, is_NoRel, strcat(frame_match_str_ori, '.mat'), plot_bar, plot_violin, img_format);
+[p_val_arr_ori_frame_wise, pairwise_test_p_val_ori_frame_wise] = run_stat_signif_jaaba_scores(behav_list, score_post_analysis_struct_frame_wise, 'on');
 
 %% Randomize human annotation score for each bout multiple times
 recall_rate_all = zeros(num_repeat, 3, 6);

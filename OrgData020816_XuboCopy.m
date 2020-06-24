@@ -1,4 +1,4 @@
-function OrgData020816_XuboCopy(expfolder,infofile,thres,isNoRel, maxgaps, minbouts, flymat_id)
+function OrgData020816_XuboCopy(expfolder,infofile,thres,isNoRel, maxgaps, minbouts, flymat_id, output_dir)
     if length(strfind(expfolder, '/') > 0)
         parts = strsplit(expfolder,'/');
     elseif length(strfind(expfolder,'\') > 0)
@@ -244,7 +244,6 @@ function OrgData020816_XuboCopy(expfolder,infofile,thres,isNoRel, maxgaps, minbo
         end;
         end;
         
-    output_dir = 'D:\xubo\code\annot-analysis';
     for i=1:length(flymat_id)
         filename = fullfile(output_dir, strcat('FLYMAT_MNL-KA JAABA training samples_', flymat_id{i}, '.mat'));
         save(filename,'flymatAll','-v7.3');

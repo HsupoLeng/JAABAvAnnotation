@@ -103,6 +103,45 @@ function compile_fp_fn_numbers(behav_sel, match_sel_str, is_frame_matches)
         end
         
         true_false_count_all.(behav_list{i}).per_movie_count = per_movie_count;
+        
+        all_flies = cellfun(@(m, f) sprintf('Movie %s Fly %d', m, f), ...
+            {matches_all.(behav_list{i})(:).movie}, {matches_all.(behav_list{i})(:).fly}, ...
+            'UniformOutput', false);
+        all_flies_w_duplicate = repelem(all_flies, associated_annot_per_bout_match);
+        false_positive_flies_w_duplicate = all_flies_w_duplicate(false_positive_idxs_w_duplicate); 
+        false_negative_flies_w_duplicate = all_flies_w_duplicate(false_negat_idxs_w_duplicate); 
+        all_flies_set = unique(all_flies);
+        
+        per_fly_count = struct('movie', '', 'fly', nan, 'false_positives', nan, 'false_negatives', nan, 'true_positives', nan, 'true_total', nan, ...
+            'false_positive_fly_frame', [], 'false_negative_fly_frame', []);
+        for j=1:length(all_flies_set)+1
+            if j<length(all_flies_set)+1
+                tokens = regexp(all_flies_set{j}, 'Movie ([\w-]+) Fly (\d+)', 'tokens');
+                per_fly_count(j).movie = tokens{1}{1};
+                per_fly_count(j).fly = str2double(tokens{1}{2});
+                this_fly_mask = strcmp(all_flies, all_flies_set(j));
+                per_fly_count(j).false_positives = nnz(strcmp(false_positive_flies_w_duplicate, all_flies_set{j}));
+                per_fly_count(j).false_negatives = nnz(strcmp(false_negative_flies_w_duplicate, all_flies_set{j})); 
+                per_fly_count(j).true_total = nnz(strcmp(all_flies_w_duplicate, all_flies_set{j})) - per_fly_count(j).false_positives;
+                per_fly_count(j).true_positives = per_fly_count(j).true_total - per_fly_count(j).false_negatives; 
+            else
+                per_fly_count(j).movie = 'summary';
+                per_fly_count(j).false_positives = sum([per_fly_count(1:j-1).false_positives]);
+                per_fly_count(j).false_negatives = sum([per_fly_count(1:j-1).false_negatives]); 
+                per_fly_count(j).true_total = sum([per_fly_count(1:j-1).true_total]);
+                per_fly_count(j).true_positives = sum([per_fly_count(1:j-1).true_positives]); 
+            end
+            
+            if is_frame_matches
+                per_fly_count(j).false_positive_fly_frame = [[matches_all.(behav_list{i})(bitand(this_fly_mask, false_positive_idxs)).fly]; [matches_all.(behav_list{i})(bitand(this_fly_mask, false_positive_idxs)).frame_num]]';
+                per_fly_count(j).false_negative_fly_frame = [[matches_all.(behav_list{i})(bitand(this_fly_mask, false_negat_idxs)).fly]; [matches_all.(behav_list{i})(bitand(this_fly_mask, false_negat_idxs)).frame_num]]';
+            else
+                per_fly_count(j).false_positive_fly_frame = [];
+                per_fly_count(j).false_negative_fly_frame = [];
+            end
+        end
+        
+        true_false_count_all.(behav_list{i}).per_fly_count = per_fly_count;
     end
     
     if is_frame_matches

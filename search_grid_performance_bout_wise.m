@@ -24,10 +24,11 @@ function search_grid_performance_bout_wise(file_id, behav_sel, threshold, is_NoR
                 % The following FLYMAT is only correct for the selected
                 % behavior. 
                 OrgData020816_XuboCopy('D:\xubo\NewTrainingFiles-OriginalCopy', ...
-                    'TrainingSamples_genotype3.xlsx', threshold(i), is_NoRel, maxgap_allbehav, minbout_allbehav, {'temp'});
+                    'TrainingSamples_genotype3.xlsx', threshold(i), is_NoRel, maxgap_allbehav, minbout_allbehav, {'temp'}, ...
+                    'D:\xubo\code\annot-analysis');
                 analyze_human_jaaba_annot_corr_v3('temp', behav_sel, override_jab_list, is_NoRel, '', false, false, false, '');
                 
-                load(strcat('bout_matches_temp.mat'), 'bout_matches_all', 'bout_masks');
+                load(strcat('bout_matches_temp.mat'), 'bout_matches_all');
                 
                 % The following section uses the conventional way of
                 % defining precision and recall, i.e. 
@@ -40,18 +41,30 @@ function search_grid_performance_bout_wise(file_id, behav_sel, threshold, is_NoR
                 % Another twist: all human annotated bouts that overlaps
                 % are counted as one single annotated bout with score being
                 % the maximum combined confidence score
-                annot_score = cellfun(@(scores) max(scores), {bout_matches_all.(behav_list{behav_sel})(bout_masks{behav_sel}).annot_score});
-                false_negat_idxs = [bout_matches_all.(behav_list{behav_sel})(bout_masks{behav_sel}).virtual_jaaba_match];
-                multi_match_idxs = [bout_matches_all.(behav_list{behav_sel})(bout_masks{behav_sel}).multi_match];
-                multi_match_idxs(isnan(multi_match_idxs)) = 0;
-                virt_annot_score_no_mm = annot_score(bitand(false_negat_idxs, ~multi_match_idxs)); 
-                true_annot_score_no_mm = annot_score(bitand(~false_negat_idxs, ~multi_match_idxs));
-                false_negat_accum_no_mm = hist(virt_annot_score_no_mm, human_annot_scores);
-                positive_accum_no_mm = hist(true_annot_score_no_mm, human_annot_scores);
-                recall = sum(positive_accum_no_mm(2:end))/(sum(false_negat_accum_no_mm(2:end))+sum(positive_accum_no_mm(2:end)));
+%                 annot_score = cellfun(@(scores) max(scores), {bout_matches_all.(behav_list{behav_sel}).annot_score});
+%                 false_negat_idxs = [bout_matches_all.(behav_list{behav_sel}).virtual_jaaba_match];
+%                 multi_match_idxs = [bout_matches_all.(behav_list{behav_sel}).multi_match];
+%                 multi_match_idxs(isnan(multi_match_idxs)) = 0;
+%                 virt_annot_score_no_mm = annot_score(bitand(false_negat_idxs, ~multi_match_idxs)); 
+%                 true_annot_score_no_mm = annot_score(bitand(~false_negat_idxs, ~multi_match_idxs));
+%                 false_negat_accum_no_mm = hist(virt_annot_score_no_mm, human_annot_scores);
+%                 positive_accum_no_mm = hist(true_annot_score_no_mm, human_annot_scores);
+%                 recall = sum(positive_accum_no_mm(2:end))/(sum(false_negat_accum_no_mm(2:end))+sum(positive_accum_no_mm(2:end)));
+% 
+%                 true_annot_score = annot_score(~false_negat_idxs);
+%                 positive_accum = hist(true_annot_score, human_annot_scores);
+%                 precision = sum(positive_accum(2:end))/sum(positive_accum);
+                
+                annot_score_all = horzcat(bout_matches_all.(behav_list{behav_sel}).annot_score);
+                associated_annot_per_bout_match = arrayfun(@(s) length(s.annot_score), bout_matches_all.(behav_list{behav_sel}));
+                false_negat_idxs = [bout_matches_all.(behav_list{behav_sel}).virtual_jaaba_match];
+                false_negat_idxs_w_duplicate = repelem(false_negat_idxs, associated_annot_per_bout_match);
+                virt_annot_score_all = annot_score_all(false_negat_idxs_w_duplicate); 
+                true_annot_score_all = annot_score_all(~false_negat_idxs_w_duplicate);
+                false_negat_accum = hist(virt_annot_score_all, human_annot_scores);
+                positive_accum = hist(true_annot_score_all, human_annot_scores);
 
-                true_annot_score = annot_score(~false_negat_idxs);
-                positive_accum = hist(true_annot_score, human_annot_scores);
+                recall = sum(positive_accum(2:end))/(sum(false_negat_accum(2:end))+sum(positive_accum(2:end)));
                 precision = sum(positive_accum(2:end))/sum(positive_accum);
                 
                 config_idx = sub2ind([length(minbout), length(maxgap), length(threshold)], k, j, i);
@@ -120,5 +133,10 @@ function search_grid_performance_bout_wise(file_id, behav_sel, threshold, is_NoR
             saveas(gcf, strcat('ManualvsJAABA_grid_performance_bout_new-', file_id, '.png'), 'png');
             saveas(double(gcf), strcat('ManualvsJAABA_grid_performance_bout_new-', file_id, '.eps'), 'eps');
         end
+        
+        precision_recall_table = array2table(MVJ(:, [1, 2, 3, 6, 7]), 'VariableNames', {'score_threshold', 'max_gap', 'min_bout', 'precision', 'recall'});
+        precision_recall_table.precision = precision_recall_table.precision * 100;
+        precision_recall_table.recall = precision_recall_table.recall * 100;
+        save(sprintf('search_post_process_param_grid_performance_%s.mat', behav_list{behav_sel}), 'precision_recall_table');
     end
 end
