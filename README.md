@@ -17,7 +17,7 @@ To perform analysis on existing JAABA outputs from one JAABA classifier, the cod
 To install, simply clone this repository to your computer. 
 
 ## Instruction for use
-The primary program entrypoint is run_analyze_human_jaaba_annot_corr_all.m. Given the JAABA classifiers and the corresponding detection thresholds, the program first runs JAABA to produce JAABA outputs, then uses the OrgData function to produce a FLYMAT MAT-file summarizing JAABA predictions. Based on FLYMAT files, the program finally calls the analyze_human_jaaba_annot_corr_v3 function to produce bout_matches MAT-files and to analyze and visualize correlation between annotation and prediction confidence values (shown as main figures of the paper). 
+The primary program entrypoint is run_analyze_human_jaaba_annot_corr_all.m. Given the JAABA classifiers and the corresponding detection thresholds, the program first runs JAABA to produce JAABA outputs, then uses the OrgData function to produce a FLYMAT MAT-file summarizing JAABA predictions. Based on FLYMAT files, the program finally calls the analyze_human_jaaba_annot_corr_v3 function to produce bout_matches MAT-files and, given human annotations, to analyze and visualize correlation between annotation and prediction confidence values (shown as main figures of the paper). 
 
 If JAABA, desired classifiers and the JAABA output folder structure are set up correctly, a user should be able to run run_analyze_human_jaaba_annot_corr_all directly. Otherwise, with the FLYMAT files, a user should be able to run analyze_human_jaaba_annot_corr_v3 separately to reproduce the same results.
 
